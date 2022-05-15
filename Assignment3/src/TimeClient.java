@@ -1,6 +1,9 @@
+package Main;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+
+
 class ServerThread extends Thread {
 	  Socket serverClient;
 	  int threadNum; // The thread's index in the arrayList
@@ -8,14 +11,27 @@ class ServerThread extends Thread {
 	  					  // the -1 indicates that it applies to no existing thread.
 	  int connected = -1; // The index of the user this user is connected to.
 	  int pending = -1; // The index of the most recent user to request a chat.
+	  
+	  
+	  
+	  
+	  
+	  
 	  DataOutputStream dos;
 	  DataInputStream dis;
 	  //ArrayList<ServerThread> serverList; // The arrayList
 	  HashMap<String, String> passwordMap;
+	  
+	  
 	  String[] profanityList; // The list of profanities to be blocked.
+	  
+	  
+	  
+	  
 	  ServerThread(Socket inSocket, HashMap<String, String> inPasswordMap){
 	    serverClient = inSocket;
 	    passwordMap = inPasswordMap;
+	    
 	    //serverList = inServerList;
 	  }
 	  public void run(){
@@ -72,6 +88,54 @@ class ServerThread extends Thread {
 						// Let the user know they are connected, and what commands can be used.
 						  dos.writeUTF("Thankyou, you are now connected. You have been assigned the password: " + password);
 						  signedIn = true;
+						  
+						 // String in2 = "";
+						  
+						  Request request = new Request();
+						  
+						  if (!in.equals("exit"))
+						  {
+							  dos.writeUTF("Filter a String or File?");
+							  in = dis.readUTF();
+							  
+							  if(in.equalsIgnoreCase("String"))
+							  {
+								  dos.writeUTF("Generated Request ID");
+								  request.setRequestID(newPassword());
+								  
+								  dos.writeUTF("Enter the string content");
+								  in = dis.readUTF();
+								  request.setStringContent(in);
+								  
+								  dos.writeUTF("Enter the deadline");
+								  in = dis.readUTF();
+								  
+								  
+								  //Placeholder
+								  if (in.equals("0"))
+								  {
+									  Main.TimeServer.urgentRequest.add(request);
+								  }
+								  if (in.equals("1"))
+								  {
+									  Main.TimeServer.nonUrgentRequest.add(request);
+								  }
+								  
+
+							  }
+							  if(in.equalsIgnoreCase("File"))
+							  {
+								  dos.writeUTF("Enter the filepath");
+								  in = dis.readUTF();
+								  
+
+							  }
+							  
+						  }
+						  
+						  
+						  
+						  
 					  }
 				  }
 				  else if(in.equals("SignIn"))

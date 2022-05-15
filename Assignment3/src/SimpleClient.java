@@ -1,6 +1,8 @@
+package Main;
 import java.util.*;
 import java.net.*;
 import java.io.*;
+
 public class SimpleClient {
 	public static void main(String args[]) throws IOException {
 		//Open your connection to a server, at port 1254
