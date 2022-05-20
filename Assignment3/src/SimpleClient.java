@@ -10,13 +10,17 @@ public class SimpleClient {
 		Scanner input = new Scanner(System.in);
 		String sending = "";
 		
+		//Get an output file handle from the socket and read the input
+		OutputStream s1Out = clientSocket.getOutputStream();
+		DataOutputStream dos = new DataOutputStream(s1Out);
+		dos.writeUTF("CLIENT");
+
 		// Instantiate and start a thread which will read and output all input from the server.
 		ClientThread ct=new ClientThread(clientSocket);
 		ct.start();
 		  
-		//Get an output file handle from the socket and read the input
-		OutputStream s1Out = clientSocket.getOutputStream();
-		DataOutputStream dos = new DataOutputStream(s1Out);
+		
+		
 		
 		// Until an error occurs, wait for the user to input text and then send that text to the server.
 		try
