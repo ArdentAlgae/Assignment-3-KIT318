@@ -1,5 +1,6 @@
 package Main;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.FileWriter;
 import java.util.Locale;
@@ -78,6 +79,8 @@ public class ProfanityManager {
                         outputdir.createNewFile();
                         outputdir.canWrite();
                         outputdir.canRead();
+                    } else {
+                    	System.out.println("Directory does not exist");
                     }
                     
                     while (readFile.hasNextLine()) {
@@ -99,6 +102,53 @@ public class ProfanityManager {
             e.printStackTrace();
         }
 
+    }
+    
+    /*
+     * Input: file (path/file.txt), output directory (dir/path)
+     * Manages single file > filters for profanity then writes to output dir (creates file)
+     * 
+     * */
+    public static void ManageSingleFile(String inputFile, String outputDir) {
+    	
+    	FileWriter myWriter = null;
+        File inputfile = new File(inputFile); //specify input directory path
+        File outputdir = null; //will hold output directory path
+        
+        Scanner readFile = null;
+        
+        if(inputfile.exists()) {
+        	try {
+				readFile = new Scanner(inputfile);
+				outputdir = new File(outputDir + "\\" + inputfile.getName());
+                myWriter = new FileWriter(outputdir);
+                String input;
+                
+                //create new file in output dir
+                if(!outputdir.exists()){
+                    outputdir.createNewFile();
+                    outputdir.canWrite();
+                    outputdir.canRead();
+                } else {
+                	System.out.println("Directory does not exist");
+                }
+                
+                while (readFile.hasNextLine()) {
+                    input = readFile.nextLine();
+                    input = ManageString(input);
+                    //inputToBytes = input.getBytes();
+                    //sb.append(input + " "); //testing
+                    myWriter.write(input);
+                }
+                myWriter.close();
+                
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				System.out.println("File does not exist");
+				e.printStackTrace();
+			}
+        }
     }
 
 
