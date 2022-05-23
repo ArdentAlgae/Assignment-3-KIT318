@@ -54,7 +54,7 @@ public class ProfanityManager {
             {
             	currentProgress = currentProgress + splitProgress;
                 request.setProgress(currentProgress);
-                System.out.print(splitStr.toString()+" Progress: "+currentProgress);
+                //System.out.print(splitStr.toString()+" Progress: "+currentProgress);
                 //Use for testing
                 //TimeUnit.SECONDS.sleep(5);
             }
@@ -157,6 +157,58 @@ public class ProfanityManager {
 
     }
 
+    /*
+     * Input: file (path/file.txt), output directory (dir/path)
+     * Manages single file > filters for profanity then writes to output dir (creates file)
+     * 
+     * */
+    public static void ManageSingleFile(String inputFile, String outputDir, Request r) throws InterruptedException {
+    	
+    	FileWriter myWriter = null;
+        File inputfile = new File(r.getInputFilePath()+"\\"+inputFile); //specify input directory path"
+        
+        File outputdir = new File(r.getOutputFilePath()); //will hold output directory path
+        
+        Scanner readFile = null;
+        
+        //TESTING
+        //TimeUnit.SECONDS.sleep(5);
+        
+        if(inputfile.exists()) {
+        	try {
+				readFile = new Scanner(inputfile);
+				outputdir = new File(outputDir + "\\" + inputfile.getName());
+                myWriter = new FileWriter(outputdir);
+                String input;
+
+                
+                //create new file in output dir
+                if(!outputdir.exists()){
+                    outputdir.createNewFile();
+                    outputdir.canWrite();
+                    outputdir.canRead();
+                } else {
+                	//System.out.println("Directory does not exist");
+                }
+                
+                while (readFile.hasNextLine()) {
+                    input = readFile.nextLine();
+                    input = ManageString(input, r);
+                    //inputToBytes = input.getBytes();
+                    //sb.append(input + " "); //testing
+                    myWriter.write(input);
+                    myWriter.write("\n");
+                }
+                myWriter.close();
+                
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				System.out.println("File does not exist");
+				e.printStackTrace();
+			}
+        }
+    }
+
 
 }
-

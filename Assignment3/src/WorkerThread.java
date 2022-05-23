@@ -106,7 +106,8 @@ public class WorkerThread extends Thread {
 					  {
 						  //TODO need to sort out file filtering
 						  r.setStatus(Request.Status.PROCESSING);
-						  ProfanityManager.ManageFiles(r.getInputFilePath(), r.getOutputFilePath(), r);
+						  //ProfanityManager.ManageFiles(r.getInputFilePath(), r.getOutputFilePath(), r);
+						  ProfanityManager.ManageSingleFile(r.getInputFileName(), r.getOutputFilePath(), r);
 						  r.setEndTime(LocalDateTime.now()); r.setStatus(Request.Status.COMPLETED);
 					  }
 				  }

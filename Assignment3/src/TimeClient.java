@@ -145,19 +145,20 @@ class ServerThread extends Thread {
 
 				if (in.equalsIgnoreCase("Request")) 
 				{
-					Request request = new Request();
-					request.setUserName(username);
+					
 
 					dos.writeUTF("Filter a String or File?");
 					in2 = dis.readUTF();
 
 					if (in2.equalsIgnoreCase("String")) {
+						Request request = new Request();
+						request.setUserName(username);
+						
 						request.setType(Type.STRING);
 						
 						request.setStatus(Request.Status.INACTIVE);
 						request.setStartTime(LocalDateTime.now());
 						
-
 						dos.writeUTF("Generated Request ID: " + incrementRequestID());
 						request.setRequestID(incrementRequestID());
 
@@ -181,42 +182,44 @@ class ServerThread extends Thread {
 						dos.writeUTF("Submitted Request");
 					}
 					if (in2.equalsIgnoreCase("File")) {
-						request.setType(Type.FILE);
-						
-						request.setStatus(Request.Status.INACTIVE);
-						request.setStartTime(LocalDateTime.now());
 						
 						dos.writeUTF("Generated Request ID: " + incrementRequestID());
-						request.setRequestID(incrementRequestID());
 						
 						dos.writeUTF("Enter the filepath");
 						in = dis.readUTF();
 						//request.setInputFilePath(in);
 						
-						//TODO need to get output file path
-						//Placeholder hardcoded input and output filepath
-						request.setInputFilePath("files/input");
-						request.setOutputFilePath("files/output");
-						
-								
 						dos.writeUTF("Enter the deadline (O for urgent, 1 for non urgent)");
 						in2 = dis.readUTF();
-						if (in2.equals("0")) {
-							Main.TimeServer.urgentRequest.add(request);
-						}
-						if (in2.equals("1")) {
-							Main.TimeServer.nonUrgentRequest.add(request);
-						}
 						
-						//TODO Need to upload file/(s) to server
+						Integer requestID = incrementRequestID();
 						
+						File dir = new File("files/input");
+						for (File file: dir.listFiles())
+						{
+							Request request = new Request();
+							request.setUserName(username);
+							
+							request.setType(Type.FILE);
+							request.setStatus(Request.Status.INACTIVE);
+							request.setStartTime(LocalDateTime.now());
+							request.setRequestID(requestID);
+							request.setInputFileName(file.getName());
+							request.setInputFilePath("files/input");
+							request.setOutputFilePath("files/output");
+							
+							if (in2.equals("0")) {
+								Main.TimeServer.urgentRequest.add(request);
+							}
+							if (in2.equals("1")) {
+								Main.TimeServer.nonUrgentRequest.add(request);
+							}
+							//TODO Need to upload file/(s) to server
+							
+						}
 						dos.writeUTF("Submitted Request");
-
 					}
-					
-					
-					
-					
+
 				}
 				
 				if (in.equalsIgnoreCase("Status"))
@@ -227,50 +230,27 @@ class ServerThread extends Thread {
 					
 					DateTimeFormatter date = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"); 
 					
-					for (Request r : Main.TimeServer.returnAllRequests())
+					if (authorisedRequest(in2, username))
 					{
+						Request r = mergeRequests(in2, username);
 						
-						if (r.getUserName().equals(username))
+						if (r.getStatus().equals(Request.Status.COMPLETED))
 						{
-							if (r.getRequestID().toString().equals(in2))
-							{
-								if (r.getStatus().equals(Request.Status.COMPLETED))
-								{
-									long timeTaken = ChronoUnit.SECONDS.between(r.getStartTime(), r.getEndTime());
-									double bill = 0.1/timeTaken;
-									String cost = String.format("%.2f",bill);
-									
-									
-									//double cost = Math.round(bill * 100.0) / 100.0;;
-									
-									dos.writeUTF("Request ID: "+r.getRequestID()+", Status: "+r.getStatus()+
-											", Date started: "+date.format(r.getStartTime())+
-											", Date ended: "+date.format(r.getEndTime())+
-											", Time taken (s): "+timeTaken+
-											", Bill: $"+cost+
-											", Output: "+r.getOutput()
-											
-											);
-									requestExists = true;
-								}
-								else
-								{
-									dos.writeUTF("Request ID: "+r.getRequestID()+", Status: "+r.getStatus()+", Date started: "+date.format(r.getStartTime()));
-									requestExists = true;
-								}
-								
-						
-
-							}
-						
-							if (!requestExists)
-							{
-								dos.writeUTF("No such request ID");
-							}
+							long timeTaken = ChronoUnit.MILLIS.between(r.getStartTime(), r.getEndTime());
+							double bill = 0.1/timeTaken;
+							String cost = String.format("%.2f",bill);
+							
+							dos.writeUTF("Request ID: "+r.getRequestID()+", Status: "+r.getStatus()+
+									", Date started: "+date.format(r.getStartTime())+
+									", Date ended: "+date.format(r.getEndTime())+
+									", Time taken (ms): "+timeTaken+
+									", Bill: $"+cost+
+									", Output: "+r.getOutput()
+									);
 						}
 						else
 						{
-							dos.writeUTF("Not authorised");
+							dos.writeUTF("Request ID: "+r.getRequestID()+", Status: "+r.getStatus()+", Date started: "+date.format(r.getStartTime()));
 						}
 					}
 						
@@ -366,5 +346,102 @@ class ServerThread extends Thread {
 		Integer urgent = TimeServer.urgentRequest.size();
 		
 		return (nonUrgent+urgent+1);
+	}
+	
+	public Boolean authorisedRequest(String requestID, String username) throws IOException
+	{
+		Boolean requestExists = false;
+		Boolean userAuthorised = false;
+		for(Request r: TimeServer.returnAllRequests())
+		{
+			if (r.getRequestID().toString().equals(requestID))
+			{
+				requestExists = true;
+				if (r.getUserName().equals(username))
+				{
+					userAuthorised = true;
+				}
+			}
+		}
+		
+		if (!requestExists)
+		{
+			dos.writeUTF("No such request ID");
+			return false;
+		}
+		else
+		{
+			if(!userAuthorised)
+			{
+				dos.writeUTF("Not authorized to view this request");
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
+		
+		
+	}
+	
+	public Request mergeRequests(String requestID, String username) throws IOException
+	{
+		Integer totalFiles = 0;
+		Integer filesCompleted = 0;
+		
+		Request req = new Request();
+		req.setUserName(username);
+		req.setType(Type.FILE);
+		req.setRequestID( Integer.parseInt(requestID));
+		req.setStatus(Request.Status.INACTIVE);
+		req.setStartTime(LocalDateTime.now());
+		
+		for(Request r: TimeServer.returnAllRequests())
+		{
+			if (r.getUserName().equals(username))
+			{
+				if (r.getRequestID().toString().equals(requestID))
+				{
+					totalFiles++;
+					req.setNumFiles(totalFiles);
+					
+					//If String
+					if (r.getType().equals(Request.Type.STRING))
+					{
+						req.setOutput(r.getOutput());
+					}
+					else
+					{
+						req.setOutput(r.getOutputFilePath());
+					}
+					
+					
+					if (r.getStatus().equals(Request.Status.COMPLETED))
+					{
+						filesCompleted++;
+						req.setCurrentFile(filesCompleted);
+						
+						req.setStatus(Request.Status.COMPLETED);
+						req.setEndTime(r.getEndTime());
+					}
+					else if (r.getStatus().equals(Request.Status.PROCESSING))
+					{
+						req.setStatus(Request.Status.PROCESSING);
+					}
+					
+					if (req.getStartTime().isAfter(r.getStartTime()))
+					{
+						req.setStartTime(r.getStartTime());
+					}
+				}
+					
+			}
+
+		}
+
+		
+		return req;
+		
 	}
 }

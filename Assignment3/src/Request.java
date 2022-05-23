@@ -7,6 +7,20 @@ public class Request {
 	String userName; // ID of user who generated request
 	String stringContent; // Content of the string if the request is a string
 	String inputFilePath; // Path of files
+	
+	String inputFileName;
+
+	public String getInputFileName() {
+		return inputFileName;
+	}
+
+	public void setInputFileName(String inputFileName) {
+		this.inputFileName = inputFileName;
+	}
+
+
+
+
 
 	String deadline; // Deadline of request
 	
@@ -21,6 +35,7 @@ public class Request {
 	LocalDateTime endTime;
 	Integer timeTaken;
 	Float bill;
+	
 	
 	
 	float progress;
