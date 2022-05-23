@@ -7,8 +7,9 @@ public class Worker {
 	String status;	//available/ not available
 	int workerID;
 	
-	String cpu; //
+	double cpu; //
 	String storage;
+	
 	
 	
 	Integer numberRequest;
@@ -44,13 +45,13 @@ public class Worker {
 	}
 
 
-	public String getCpu() {
+	public double getCpu() {
 		return cpu;
 	}
 
 
-	public void setCpu(String cpu) {
-		this.cpu = cpu;
+	public void setCpu(double d) {
+		this.cpu = d;
 	}
 
 

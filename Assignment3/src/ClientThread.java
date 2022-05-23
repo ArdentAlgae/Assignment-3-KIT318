@@ -1,10 +1,12 @@
 package Main;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.concurrent.TimeUnit;
 
 public class ClientThread extends Thread{
@@ -24,8 +26,13 @@ public class ClientThread extends Thread{
 			
 			while(true)
 				{
+				try {System.out.println(dis.readUTF());}
+				catch(SocketException | EOFException e) 
+					{   
+						System.out.print("Exiting...");
+						System.exit(0);
+					}
 					
-					System.out.println(dis.readUTF());
 				}
 			
 		}
@@ -33,4 +40,5 @@ public class ClientThread extends Thread{
 	}
 
 }
+
 

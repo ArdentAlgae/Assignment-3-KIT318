@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import Main.Request.Type;
@@ -24,11 +25,7 @@ class ServerThread extends Thread {
 	DataOutputStream dos;
 	DataInputStream dis;
 
-	ServerThread(Socket inSocket) {
-		serverClient = inSocket;
-
-		// serverList = inServerList;
-	}
+	ServerThread(Socket inSocket) {serverClient = inSocket;}
 
 	public void run() {
 		try {
@@ -41,7 +38,7 @@ class ServerThread extends Thread {
 			InputStream s1In = serverClient.getInputStream();
 			dis = new DataInputStream(s1In);
 			
-			authenticate(); // Get a name and description from the user, make sure they are allowed.
+			//authenticate(); // Get a name and description from the user, make sure they are allowed.
 
 			if (!in.equalsIgnoreCase("Exit"))
 			{
@@ -157,7 +154,7 @@ class ServerThread extends Thread {
 					if (in2.equalsIgnoreCase("String")) {
 						request.setType(Type.STRING);
 						
-						request.setStatus("Inactive");
+						request.setStatus(Request.Status.INACTIVE);
 						request.setStartTime(LocalDateTime.now());
 						
 
@@ -186,7 +183,7 @@ class ServerThread extends Thread {
 					if (in2.equalsIgnoreCase("File")) {
 						request.setType(Type.FILE);
 						
-						request.setStatus("Inactive");
+						request.setStatus(Request.Status.INACTIVE);
 						request.setStartTime(LocalDateTime.now());
 						
 						dos.writeUTF("Generated Request ID: " + incrementRequestID());
@@ -194,8 +191,14 @@ class ServerThread extends Thread {
 						
 						dos.writeUTF("Enter the filepath");
 						in = dis.readUTF();
-						request.setFilePath(in);
-
+						//request.setInputFilePath(in);
+						
+						//TODO need to get output file path
+						//Placeholder hardcoded input and output filepath
+						request.setInputFilePath("files/input");
+						request.setOutputFilePath("files/output");
+						
+								
 						dos.writeUTF("Enter the deadline (O for urgent, 1 for non urgent)");
 						in2 = dis.readUTF();
 						if (in2.equals("0")) {
@@ -204,9 +207,13 @@ class ServerThread extends Thread {
 						if (in2.equals("1")) {
 							Main.TimeServer.nonUrgentRequest.add(request);
 						}
+						
+						//TODO Need to upload file/(s) to server
+						
 						dos.writeUTF("Submitted Request");
 
 					}
+					
 					
 					
 					
@@ -227,9 +234,32 @@ class ServerThread extends Thread {
 						{
 							if (r.getRequestID().toString().equals(in2))
 							{
+								if (r.getStatus().equals(Request.Status.COMPLETED))
+								{
+									long timeTaken = ChronoUnit.SECONDS.between(r.getStartTime(), r.getEndTime());
+									double bill = 0.1/timeTaken;
+									String cost = String.format("%.2f",bill);
+									
+									
+									//double cost = Math.round(bill * 100.0) / 100.0;;
+									
+									dos.writeUTF("Request ID: "+r.getRequestID()+", Status: "+r.getStatus()+
+											", Date started: "+date.format(r.getStartTime())+
+											", Date ended: "+date.format(r.getEndTime())+
+											", Time taken (s): "+timeTaken+
+											", Bill: $"+cost+
+											", Output: "+r.getOutput()
+											
+											);
+									requestExists = true;
+								}
+								else
+								{
+									dos.writeUTF("Request ID: "+r.getRequestID()+", Status: "+r.getStatus()+", Date started: "+date.format(r.getStartTime()));
+									requestExists = true;
+								}
 								
-								dos.writeUTF("Request ID: "+r.getRequestID()+", Status: "+r.getStatus()+", Date started: "+date.format(r.getStartTime()));
-								requestExists = true;
+						
 
 							}
 						
@@ -249,18 +279,23 @@ class ServerThread extends Thread {
 				//Still need to stop requests once they have been started by a worker!!!!
 				if (in.equalsIgnoreCase("Stop"))
 				{
-					dos.writeUTF("Enter the request ID to stop");
+					dos.writeUTF("Enter the request ID to stop"); 
 					in2 = dis.readUTF();
 					
 					for (Request r : Main.TimeServer.returnAllRequests())
 					{
 						if (r.getRequestID().toString().equals(in2))
 						{
-							if (r.getStatus().equalsIgnoreCase("inactive"))
+							//Deletes request from list
+//							if (r.getStatus().equals(Request.Status.INACTIVE))
+//							{
+//								Main.TimeServer.deleteUrgentRequest(r);
+//								Main.TimeServer.deleteNonUrgentRequest(r);
+//								dos.writeUTF("Request ID: "+r.getRequestID()+" has been stopped");
+//							}
+							if (!r.getStatus().equals(Request.Status.COMPLETED))
 							{
-								Main.TimeServer.deleteUrgentRequest(r);
-								Main.TimeServer.deleteNonUrgentRequest(r);
-								dos.writeUTF("Request ID: "+r.getRequestID()+" has been stopped");
+								r.setStatus(Request.Status.CANCELLED);
 							}
 						}
 					}
@@ -275,7 +310,16 @@ class ServerThread extends Thread {
 					dos.writeUTF("List all requests");
 					for (Request r : Main.TimeServer.returnAllRequests())
 					{
-						dos.writeUTF("Request ID: "+r.getRequestID()+", Status: "+r.getStatus()+", Date started: "+date.format(r.getStartTime()));
+						if (r.getType().equals(Request.Type.STRING))
+						{
+							dos.writeUTF("Request ID: "+r.getRequestID()+", Status: "+r.getStatus()+", Progress: "+r.getProgress()+"%"+", Date started: "+date.format(r.getStartTime()));
+						}
+						
+						if (r.getType().equals(Request.Type.FILE))
+						{
+							dos.writeUTF("Request ID: "+r.getRequestID()+", Status: "+r.getStatus()+", File "+r.getCurrentFile()+"/"+r.getNumFiles()+", Date started: "+date.format(r.getStartTime()));
+						}
+						
 					}
 					
 				}
