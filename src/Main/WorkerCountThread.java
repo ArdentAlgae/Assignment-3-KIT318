@@ -2,18 +2,11 @@ package Main;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Random;
 
-import Main.Request.Type;
-
-public class WorkerThread extends Thread {
+public class WorkerCountThread extends Thread {
 	
 	Socket serverClient;
 	int threadNum; // The thread's index in the arrayList
@@ -30,12 +23,13 @@ public class WorkerThread extends Thread {
 	DataOutputStream dos;
 	DataInputStream dis;
 
-	WorkerThread(Socket inSocket) {
+	WorkerCountThread(Socket inSocket) {
 		serverClient = inSocket;
 
 		// serverList = inServerList;
 	}
-
+	
+	
 	public void run() {
 		try {
 
@@ -47,38 +41,33 @@ public class WorkerThread extends Thread {
 			InputStream s1In = serverClient.getInputStream();
 			dis = new DataInputStream(s1In);
 			
-			//Input Worker details
-			Worker w = new Worker();
-			w.setWorkerID(Main.TimeServer.workerList.size()+1);
-			Main.TimeServer.workerList.add(w);
 			
-			//Print to server for testing
-			System.out.print("\nWorker ID: "+w.getWorkerID()+" Started...");
+			//Checks the list of requests and number of workers and adds workers as necessary
+			while (true)
+			{
+				//Create new worker
+				Thread.sleep(1000);
+				
+				//Currently limits number of workers to 2
+				if ((Main.TimeServer.returnAllRequests().size() > 1 && Main.TimeServer.workerList.size() < 2) || Main.TimeServer.workerList.size() == 0)
+				{
+					Socket workerSocket = new Socket("127.0.0.1",1254);
+					DataOutputStream dos2;
+					OutputStream s2out = workerSocket.getOutputStream();
+					dos2 = new DataOutputStream(s2out);
+					dos2.writeUTF("WORKER");
+				}
+				
+			}
 			
-			
-			processInput(); // Loop that will be used to process requests
-			
-			dos.close();
-			s1out.close();
-			dis.close();
-			s1In.close();
-			serverClient.close();
+			//dos.close();
+			//s1out.close();
+			//dis.close();
+			//s1In.close();
+			//serverClient.close();
 		} catch (Exception ex) {
 			System.out.println(ex);
 		}
 	}
 
-
-	public void processInput() throws UnknownHostException, IOException, InterruptedException {
-		
-		
-		while (true)
-		{
-			
-			
-		}
-		
-	}
-
-	
 }

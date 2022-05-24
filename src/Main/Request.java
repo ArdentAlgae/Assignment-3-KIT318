@@ -6,12 +6,26 @@ public class Request {
 
 	String userName; // ID of user who generated request
 	String stringContent; // Content of the string if the request is a string
-	String filePath; // Path of files
-	String status; // Status of request
+	String inputFilePath; // Path of files
+	
+	String inputFileName;
+
+	public String getInputFileName() {
+		return inputFileName;
+	}
+
+	public void setInputFileName(String inputFileName) {
+		this.inputFileName = inputFileName;
+	}
+
+
+
+
+
 	String deadline; // Deadline of request
 	
 	String output; // Output of request if string
-	String outputFile; // Output of request if file
+	String outputFilePath; // Output of request if file
 	
 	Integer requestID; // ID of request
 
@@ -21,6 +35,46 @@ public class Request {
 	LocalDateTime endTime;
 	Integer timeTaken;
 	Float bill;
+	
+	
+	
+	float progress;
+	Integer numFiles;
+	Integer currentFile;
+	
+	public Integer getCurrentFile() {
+		return currentFile;
+	}
+
+	public void setCurrentFile(Integer currentFile) {
+		this.currentFile = currentFile;
+	}
+
+	public float getProgress() {
+		return progress;
+	}
+
+	public void setProgress(float currentProgress) {
+		this.progress = currentProgress;
+	}
+
+	public Integer getNumFiles() {
+		return numFiles;
+	}
+
+	public void setNumFiles(Integer numFiles) {
+		this.numFiles = numFiles;
+	}
+
+	
+	
+	
+	
+	Status status;
+	
+	enum Status {
+		INACTIVE, PROCESSING, COMPLETED, CANCELLED
+	}
 	
 	
 	public LocalDateTime getStartTime() {
@@ -87,12 +141,12 @@ public class Request {
 		this.output = output;
 	}
 
-	public String getOutputFile() {
-		return outputFile;
+	public String getOutputFilePath() {
+		return outputFilePath;
 	}
 
-	public void setOutputFile(String outputFile) {
-		this.outputFile = outputFile;
+	public void setOutputFilePath(String outputFile) {
+		this.outputFilePath = outputFile;
 	}
 
 	public Integer getRequestID() {
@@ -120,19 +174,19 @@ public class Request {
 		this.stringContent = stringContent;
 	}
 
-	public String getFilePath() {
-		return filePath;
+	public String getInputFilePath() {
+		return inputFilePath;
 	}
 
-	public void setFilePath(String filePath) {
-		this.filePath = filePath;
+	public void setInputFilePath(String filePath) {
+		this.inputFilePath = filePath;
 	}
 
-	public String getStatus() {
+	public Status getStatus() {
 		return status;
 	}
 
-	public void setStatus(String status) {
+	public void setStatus(Status status) {
 		this.status = status;
 	}
 
