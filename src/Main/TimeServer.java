@@ -81,7 +81,7 @@ public class TimeServer {
 			System.out.print("Server started");
 			
 			//Start the thread for counting the number of workers
-			Socket workerSocket = new Socket("127.0.0.1",1254);
+			Socket workerSocket = new Socket("127.0.0.2",1254);
 			Socket workerCount = server.accept();
 			WorkerCountThread wct = new WorkerCountThread(workerCount); // send the request to a separate thread
 			wct.start(); // Start the server thread that was added to the arrayList.

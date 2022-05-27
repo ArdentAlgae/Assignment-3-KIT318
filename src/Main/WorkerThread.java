@@ -30,9 +30,11 @@ public class WorkerThread extends Thread {
 	
 	String in = "";
 	
-	
+	Worker w;
 
+	OutputStream s1out;
 	DataOutputStream dos;
+	InputStream s1In;
 	DataInputStream dis;
 
 	WorkerThread(Socket inSocket) {
@@ -48,15 +50,13 @@ public class WorkerThread extends Thread {
 			// Set up input and output. dis and dos are class variables so they can be
 			// accesed by all methods, and even
 			// other threads, to send messages to this thread's user.
-			OutputStream s1out = serverClient.getOutputStream();
+			s1out = serverClient.getOutputStream();
 			dos = new DataOutputStream(s1out);
-			InputStream s1In = serverClient.getInputStream();
+			s1In = serverClient.getInputStream();
 			dis = new DataInputStream(s1In);
 			
-			
-			
 			//Input Worker details
-			Worker w = new Worker();
+			w = new Worker();
 			w.setWorkerID(Main.TimeServer.workerList.size()+1);
 			Main.TimeServer.workerList.add(w);
 			
@@ -64,7 +64,7 @@ public class WorkerThread extends Thread {
 			System.out.print("\nWorker ID: "+w.getWorkerID()+" Started...");
 			
 			
-			processInput(w); // Loop that will be used to process requests
+			processInput(); // Loop that will be used to process requests
 			
 			dos.close();
 			s1out.close();
@@ -72,12 +72,12 @@ public class WorkerThread extends Thread {
 			s1In.close();
 			serverClient.close();
 		} catch (Exception ex) {
-			System.out.println(ex);
+			endWorkerThread();
 		}
 	}
 
 
-	public void processInput(Worker w) throws UnknownHostException, IOException, InterruptedException {
+	public void processInput() throws UnknownHostException, IOException, InterruptedException {
 		
 		while (true)
 		{
@@ -100,6 +100,12 @@ public class WorkerThread extends Thread {
 						  String output = ProfanityManager.ManageString(r.getStringContent(), r);
 						  r.setOutput(output);
 						  r.setEndTime(LocalDateTime.now()); r.setStatus(Request.Status.COMPLETED);
+						  
+						  // If there are more than 2 workers and the conditions that led to the creation of extra workers are no longer in place, and this worker thread.
+						  if (Main.TimeServer.returnAllRequests().size() <= 3 * (Main.TimeServer.workerList.size() - 1) && Main.TimeServer.workerList.size() > 2)
+						  {
+								endWorkerThread();
+						  }
 					  	}
 					  
 					  if (r.getType().equals(Request.Type.FILE) && r.getStatus().equals(Request.Status.INACTIVE))
@@ -109,6 +115,12 @@ public class WorkerThread extends Thread {
 						  //ProfanityManager.ManageFiles(r.getInputFilePath(), r.getOutputFilePath(), r);
 						  ProfanityManager.ManageSingleFile(r.getInputFileName(), r.getOutputFilePath(), r);
 						  r.setEndTime(LocalDateTime.now()); r.setStatus(Request.Status.COMPLETED);
+						  
+						  // If there are more than 2 workers and the conditions that led to the creation of extra workers are no longer in place, and this worker thread.
+						  if (Main.TimeServer.returnAllRequests().size() <= 3 * (Main.TimeServer.workerList.size() - 1) && Main.TimeServer.workerList.size() > 2)
+						  {
+							  endWorkerThread();
+						  }
 					  }
 				  }
 			}
@@ -126,5 +138,30 @@ public class WorkerThread extends Thread {
 		
 	}
 
-	
+	@SuppressWarnings("deprecation")
+	private void endWorkerThread()
+	{
+		try
+		{
+			Main.TimeServer.workerList.remove(w);
+		}
+		catch (Exception ex)
+		{
+		}
+		try
+		{
+			dos.close();
+			s1out.close();
+			dis.close();
+			s1In.close();
+			serverClient.close();
+		}
+		catch (Exception ex)
+		{
+		}
+		finally
+		{
+			this.stop();
+		}
+	}
 }

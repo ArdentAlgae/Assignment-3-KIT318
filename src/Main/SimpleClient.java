@@ -6,7 +6,7 @@ import java.io.*;
 public class SimpleClient {
 	public static void main(String args[]) throws IOException {
 		//Open your connection to a server, at port 1254
-		Socket clientSocket = new Socket("127.0.0.1",1254);
+		Socket clientSocket = new Socket("127.0.0.1"/*"131.217.172.91"*/,1254); // The first address is to test code locally, the second connects to the nectar cloud.
 		Scanner input = new Scanner(System.in);
 		String sending = "";
 		

@@ -49,7 +49,8 @@ public class WorkerCountThread extends Thread {
 				Thread.sleep(1000);
 				
 				//Currently limits number of workers to 2
-				if ((Main.TimeServer.returnAllRequests().size() > 1 && Main.TimeServer.workerList.size() < 2) || Main.TimeServer.workerList.size() == 0)
+				int numRequests = Main.TimeServer.returnAllRequests().size(), numWorkers = Main.TimeServer.workerList.size();
+				if ((numRequests > 1 && numWorkers < 2) || numWorkers == 0 || numRequests > 3 * numWorkers) //For more than 2 workers to be created, there must be more than 3 queued requests per worker.
 				{
 					Socket workerSocket = new Socket("127.0.0.1",1254);
 					DataOutputStream dos2;
