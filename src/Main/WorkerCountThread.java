@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.LinkedList;
 
 public class WorkerCountThread extends Thread {
 	
@@ -46,11 +47,11 @@ public class WorkerCountThread extends Thread {
 			while (true)
 			{
 				//Create new worker
-				Thread.sleep(1000);
+				Thread.sleep(10);
 				
 				//Currently limits number of workers to 2
-				int numRequests = Main.TimeServer.returnAllRequests().size(), numWorkers = Main.TimeServer.workerList.size();
-				if ((numRequests > 1 && numWorkers < 2) || numWorkers == 0 || numRequests > 3 * numWorkers) //For more than 2 workers to be created, there must be more than 3 queued requests per worker.
+				int numRequests = Main.TimeServer.returnAllRequestsToProcess().size(), numWorkers = Main.TimeServer.workerList.size();
+				if ((numRequests > 1 && numWorkers < 2) || numWorkers == 0 || numRequests > 3 * numWorkers || numWorkers < 1 ) //For more than 2 workers to be created, there must be more than 3 queued requests per worker.
 				{
 					Socket workerSocket = new Socket("127.0.0.1",1254);
 					DataOutputStream dos2;
@@ -59,6 +60,25 @@ public class WorkerCountThread extends Thread {
 					dos2.writeUTF("WORKER");
 				}
 				
+				
+				LinkedList<Worker> workerThreads = (LinkedList<Worker>) Main.TimeServer.workerList.clone();
+				for (Worker wt : workerThreads)
+				{
+					if (wt.getCurrentThread().getState() == Thread.State.TERMINATED)
+					{
+						System.out.print("\nWorker ID: " +wt.getWorkerID()+" has failed");
+						//Thread has been terminated
+						TimeServer.workerList.remove(wt);
+						for (Request r : TimeServer.returnAllRequests())
+						{
+							if (r.getRequestID() == wt.getProcessingRequestID() && !r.getStatus().equals(Request.Status.COMPLETED) )
+							{
+								r.setStatus(Request.Status.INACTIVE);
+							}
+						}
+					}
+					
+				}
 			}
 			
 			//dos.close();

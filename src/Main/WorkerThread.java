@@ -57,8 +57,32 @@ public class WorkerThread extends Thread {
 			
 			//Input Worker details
 			w = new Worker();
-			w.setWorkerID(Main.TimeServer.workerList.size()+1);
+			
+			if (TimeServer.hasWorkerFailed == false)
+			{
+				//w.setWorkerID(Main.TimeServer.workerList.size()+1);
+			}
+			else
+			{
+				//w.setWorkerID(Main.TimeServer.workerList.size()+2);
+				//TimeServer.hasWorkerFailed = false;
+			}
+			
+			if (TimeServer.workerList.isEmpty())
+			{
+				w.setWorkerID(1);
+			}
+			else
+			{
+				w.setWorkerID(TimeServer.workerList.getLast().getWorkerID()+1);
+			}
+			
+			
+			
+			w.setCurrentThread(Thread.currentThread());
+			
 			Main.TimeServer.workerList.add(w);
+		
 			
 			//Print to server for testing
 			System.out.print("\nWorker ID: "+w.getWorkerID()+" Started...");
@@ -79,30 +103,47 @@ public class WorkerThread extends Thread {
 
 	public void processInput() throws UnknownHostException, IOException, InterruptedException {
 		
+		
 		while (true)
 		{
-			
-			Thread.sleep(1000);
+			Thread.sleep(10);
 			
 			//TODO need to query the worker cpu, storage, health etc...
 			OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
 			w.setCpu(osBean.getProcessCpuLoad());
 			
 			
+				
+			// If there are more than 2 workers and the conditions that led to the creation of extra workers are no longer in place, and this worker thread.
+			if (Main.TimeServer.returnAllRequestsToProcess().size() <= 3 * (Main.TimeServer.workerList.size() - 1) && Main.TimeServer.workerList.size() > 2) 
+			{
+				endWorkerThread();
+			}
 			
-			if (!Main.TimeServer.returnAllRequests().isEmpty())
+			
+			if (!Main.TimeServer.returnAllRequestsToProcess().isEmpty())
 			{
 				  for (Request r : Main.TimeServer.returnAllRequests()) 
 				  {
 					  if (r.getType().equals(Request.Type.STRING) && r.getStatus().equals(Request.Status.INACTIVE))
 					  	{
+						  w.setProcessingRequestID(r.getRequestID());
 						  r.setStatus(Request.Status.PROCESSING);
+						  
+						  //Uncomment to test worker failure handling
+						  if (w.getWorkerID() == 1) 
+						  {
+							  w.currentThread.stop();
+							  TimeServer.hasWorkerFailed = true;
+						  } 
+						  
 						  String output = ProfanityManager.ManageString(r.getStringContent(), r);
 						  r.setOutput(output);
 						  r.setEndTime(LocalDateTime.now()); r.setStatus(Request.Status.COMPLETED);
+						  w.setProcessingRequestID(null);
 						  
 						  // If there are more than 2 workers and the conditions that led to the creation of extra workers are no longer in place, and this worker thread.
-						  if (Main.TimeServer.returnAllRequests().size() <= 3 * (Main.TimeServer.workerList.size() - 1) && Main.TimeServer.workerList.size() > 2)
+						  if (Main.TimeServer.returnAllRequestsToProcess().size() <= 3 * (Main.TimeServer.workerList.size() - 1) && Main.TimeServer.workerList.size() > 2)
 						  {
 								endWorkerThread();
 						  }
@@ -115,17 +156,12 @@ public class WorkerThread extends Thread {
 						  //ProfanityManager.ManageFiles(r.getInputFilePath(), r.getOutputFilePath(), r);
 						  ProfanityManager.ManageSingleFile(r.getInputFileName(), r.getOutputFilePath(), r);
 						  r.setEndTime(LocalDateTime.now()); r.setStatus(Request.Status.COMPLETED);
-						  
-						  // If there are more than 2 workers and the conditions that led to the creation of extra workers are no longer in place, and this worker thread.
-						  if (Main.TimeServer.returnAllRequests().size() <= 3 * (Main.TimeServer.workerList.size() - 1) && Main.TimeServer.workerList.size() > 2)
-						  {
-							  endWorkerThread();
-						  }
 					  }
 				  }
 			}
 			
-			  
+			
+			 
 			
 //			  System.out.print("LOOPING"); if (r.getType().equals(Request.Type.STRING) &&
 //			  r.getStatus().equals(Request.Status.INACTIVE)) {
@@ -133,8 +169,8 @@ public class WorkerThread extends Thread {
 //			  r.setOutput(ProfanityManager.ManageString(r.getStringContent()));
 //			  r.setEndTime(LocalDateTime.now()); r.setStatus(Request.Status.COMPLETED); } }
 //			 
-
 		}
+		
 		
 	}
 
@@ -143,6 +179,7 @@ public class WorkerThread extends Thread {
 	{
 		try
 		{
+			System.out.print("\nEnding worker: " + w.getWorkerID());
 			Main.TimeServer.workerList.remove(w);
 		}
 		catch (Exception ex)

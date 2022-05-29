@@ -6,33 +6,73 @@ import java.util.*;
 
 public class TimeServer {
 
-	public static LinkedList<Request> urgentRequest = new LinkedList<Request>();
-	public static LinkedList<Request> nonUrgentRequest = new LinkedList<Request>();
-	public static LinkedList<User> userList = new LinkedList<User>();
+	public static LinkedList<Request> urgentRequest = new LinkedList<Request>(); //For storing urgent request
+	public static LinkedList<Request> nonUrgentRequest = new LinkedList<Request>(); //For storing non urgent requests
 	
-	public static HashMap<Integer, Boolean> connectedSocket = new HashMap<Integer, Boolean>();
-	
+	public static LinkedList<User> userList = new LinkedList<User>(); //For authenticating users and storing their login details
 	public static LinkedList<Worker> workerList = new LinkedList<Worker>();
+	
+	//For testing a failed worker
+	public static Boolean hasWorkerFailed = false;
+	
 
-	public static HashMap<Integer, Boolean> returnHashMap() {
-		return connectedSocket;
-	}
+
 	
-	
-	
+	/**
+	 * This method returns a list of all requests including completed requests and cancelled requests
+	 * @return LinkedList<Request> containing every request
+	 */
 	public static LinkedList<Request> returnAllRequests()
 	{
 		LinkedList<Request> allRequest = (LinkedList<Request>) urgentRequest.clone();
 		
 		for (Request r : nonUrgentRequest)
 		{
-			allRequest.add(r);
+				allRequest.add(r);
 		}
 		
 		return allRequest;
 	}
 	
+	/**
+	 * This method return all requests that still been to be processed
+	 * @return LinkedList<Request> containing all requests to process
+	 */
+	public static LinkedList<Request> returnAllRequestsToProcess()
+	{
+		LinkedList<Request> allRequest = new LinkedList<Request>();
+		
+		for (Request r : nonUrgentRequest)
+		{
+			if (!r.getStatus().equals(Request.Status.COMPLETED))
+			{
+				if (!r.getStatus().equals(Request.Status.CANCELLED))
+				{
+					allRequest.add(r);
+				}
+			}
+			
+		}
+		
+		for (Request r : urgentRequest)
+		{
+			if (!r.getStatus().equals(Request.Status.COMPLETED))
+			{
+				if (!r.getStatus().equals(Request.Status.CANCELLED))
+				{
+					allRequest.add(r);
+				}
+			}
+			
+		}
+		return allRequest;
+	}
 	
+	
+	/**
+	 * Method for deleting a request from the list of urgent requests
+	 * @param r
+	 */
 	public static void deleteUrgentRequest(Request r)
 	{
 		LinkedList<Request> filteredRequest = new LinkedList<Request>();
@@ -49,6 +89,10 @@ public class TimeServer {
 		urgentRequest =  filteredRequest;
 	}
 	
+	/**
+	 * Method for deleting a request from the non urgent list of requests
+	 * @param r
+	 */
 	public static void deleteNonUrgentRequest(Request r)
 	{
 		LinkedList<Request> filteredRequest = new LinkedList<Request>();
@@ -69,7 +113,11 @@ public class TimeServer {
 	
 	
 	
-
+/**
+ * Main Method for the Server
+ * @param args
+ * @throws Exception
+ */
 	public static void main(String[] args) throws Exception {
 		
 		
@@ -106,6 +154,7 @@ public class TimeServer {
 				{
 					WorkerThread wct2 = new WorkerThread(openSocket); // send the request to a separate thread
 					wct2.start(); // Start the server thread that was added to the arrayList.
+					
 				}
 				else
 				{

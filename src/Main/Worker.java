@@ -10,8 +10,46 @@ public class Worker {
 	double cpu; //
 	String storage;
 	
+	Thread currentThread;
+	
+	Integer processingRequestID;
 	
 	
+	
+
+
+	/**
+	 * @return the processingRequestID
+	 */
+	public Integer getProcessingRequestID() {
+		return processingRequestID;
+	}
+
+
+	/**
+	 * @param integer the processingRequestID to set
+	 */
+	public void setProcessingRequestID(Integer integer) {
+		this.processingRequestID = integer;
+	}
+
+
+	/**
+	 * @return the currentThread
+	 */
+	public Thread getCurrentThread() {
+		return currentThread;
+	}
+
+
+	/**
+	 * @param currentThread the currentThread to set
+	 */
+	public void setCurrentThread(Thread currentThread) {
+		this.currentThread = currentThread;
+	}
+
+
 	Integer numberRequest;
 	
 	

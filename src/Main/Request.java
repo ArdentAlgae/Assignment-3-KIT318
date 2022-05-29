@@ -10,17 +10,6 @@ public class Request {
 	
 	String inputFileName;
 
-	public String getInputFileName() {
-		return inputFileName;
-	}
-
-	public void setInputFileName(String inputFileName) {
-		this.inputFileName = inputFileName;
-	}
-
-
-
-
 
 	String deadline; // Deadline of request
 	
@@ -41,6 +30,16 @@ public class Request {
 	float progress;
 	Integer numFiles;
 	Integer currentFile;
+	
+	Status status;
+	
+	public String getInputFileName() {
+		return inputFileName;
+	}
+
+	public void setInputFileName(String inputFileName) {
+		this.inputFileName = inputFileName;
+	}
 	
 	public Integer getCurrentFile() {
 		return currentFile;
@@ -67,10 +66,6 @@ public class Request {
 	}
 
 	
-	
-	
-	
-	Status status;
 	
 	enum Status {
 		INACTIVE, PROCESSING, COMPLETED, CANCELLED

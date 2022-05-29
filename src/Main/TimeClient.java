@@ -226,7 +226,7 @@ class ServerThread extends Thread {
 				{
 					dos.writeUTF("Enter the request ID to get the status");
 					in2 = dis.readUTF();
-					Boolean requestExists = false;
+					//Boolean requestExists = false;
 					
 					DateTimeFormatter date = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"); 
 					
@@ -302,6 +302,42 @@ class ServerThread extends Thread {
 						
 					}
 					
+				}
+				
+				//Delete later. For testing purposes
+				//This lists all the worker threads
+				if (in.equalsIgnoreCase("Workers"))
+				{
+					dos.writeUTF("List all worker threads");
+					dos.writeUTF("Worker count: "+Main.TimeServer.workerList.size());
+					for (Worker w : Main.TimeServer.workerList)
+					{
+						dos.writeUTF("Worker ID: "+w.getWorkerID());
+					}
+					
+				}
+				
+				
+				//Delete later. For testing purposes
+				//Use to input a bunch of requests
+				if (in.equalsIgnoreCase("test"))
+				{
+					for (int i = 0; i < 30; i++)
+					{
+						Request request = new Request();
+						request.setUserName(username);
+						
+						request.setType(Type.STRING);
+						
+						request.setStatus(Request.Status.INACTIVE);
+						request.setStartTime(LocalDateTime.now());
+						
+						dos.writeUTF("Generated Request ID: " + incrementRequestID());
+						request.setRequestID(incrementRequestID());
+						request.setStringContent("input :"+i+" badwords  testing testing testing badwords");
+						request.setDeadline("0");
+						Main.TimeServer.urgentRequest.add(request);
+					}
 				}
 				
 				if (in.equalsIgnoreCase("No"))
