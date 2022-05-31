@@ -237,7 +237,7 @@ class ServerThread extends Thread {
 						if (r.getStatus().equals(Request.Status.COMPLETED))
 						{
 							long timeTaken = ChronoUnit.MILLIS.between(r.getStartTime(), r.getEndTime());
-							double bill = 0.1/timeTaken;
+							double bill = r.generateBill();
 							String cost = String.format("%.2f",bill);
 							
 							dos.writeUTF("Request ID: "+r.getRequestID()+", Status: "+r.getStatus()+

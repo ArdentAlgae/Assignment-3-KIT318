@@ -1,5 +1,6 @@
 package Main;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 public class Request {
@@ -183,6 +184,86 @@ public class Request {
 
 	public void setStatus(Status status) {
 		this.status = status;
+	}
+	
+	public double generateBill()
+	{
+		double bill = 0;
+		boolean finished = false;
+		boolean startTimesChecked = false;
+		TimeIntPair prev = TimeServer.timeIntList.getFirst();
+		for(TimeIntPair current: TimeServer.timeIntList)
+		{
+			if(current.time.isAfter(startTime))
+			{
+				if(current.time.isAfter(endTime))
+				{
+					if(prev.time.isAfter(startTime))
+					{
+						bill += Duration.between(prev.time, endTime).toNanos()*TimeServer.PRICERATE/prev.numWorkers;
+					}
+					else
+					{
+						bill += Duration.between(startTime, endTime).toNanos()*TimeServer.PRICERATE/prev.numWorkers;
+					}
+					
+					finished = true;
+					break;
+				}
+				else
+				{
+					if(prev.time.isAfter(startTime))
+					{
+						bill += Duration.between(prev.time, current.time).toNanos()*TimeServer.PRICERATE/prev.numWorkers;
+					}
+					else
+					{
+						bill += Duration.between(startTime, current.time).toNanos()*TimeServer.PRICERATE/prev.numWorkers;
+					}
+				}
+			}
+			
+			if(!startTimesChecked && current != prev)
+			{
+				boolean requestBeforeCurrent = false;
+				for(Request r : TimeServer.urgentRequest)
+				{
+					if(current.time.isAfter(r.getStartTime()))
+					{
+						
+					}
+				}
+				for(Request r : TimeServer.nonUrgentRequest)
+				{
+					if(current.time.isAfter(r.getStartTime()))
+					{
+						
+					}
+				}
+				if(!requestBeforeCurrent)
+				{
+					TimeServer.timeIntList.removeFirst();
+				}
+				else
+				{
+					startTimesChecked = true;
+				}
+			}
+			
+			prev = current;
+		}
+		if(!finished)
+		{
+			if(prev.time.isAfter(startTime))
+			{
+				bill += Duration.between(prev.time, endTime).toNanos()*TimeServer.PRICERATE/prev.numWorkers;
+			}
+			else
+			{
+				bill += Duration.between(startTime, endTime).toNanos()*TimeServer.PRICERATE/prev.numWorkers;
+			}
+		}
+		return bill;
 	}
 
 }

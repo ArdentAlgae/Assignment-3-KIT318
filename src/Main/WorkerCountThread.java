@@ -69,6 +69,7 @@ public class WorkerCountThread extends Thread {
 						System.out.print("\nWorker ID: " +wt.getWorkerID()+" has failed");
 						//Thread has been terminated
 						TimeServer.workerList.remove(wt);
+						TimeServer.updateTimeList();
 						for (Request r : TimeServer.returnAllRequests())
 						{
 							if (r.getRequestID() == wt.getProcessingRequestID() && !r.getStatus().equals(Request.Status.COMPLETED) )

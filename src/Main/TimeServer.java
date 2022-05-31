@@ -3,6 +3,7 @@ package Main;
 import java.net.*;
 import java.io.*;
 import java.util.*;
+import java.time.LocalDateTime;
 
 public class TimeServer {
 
@@ -12,10 +13,12 @@ public class TimeServer {
 	public static LinkedList<User> userList = new LinkedList<User>(); //For authenticating users and storing their login details
 	public static LinkedList<Worker> workerList = new LinkedList<Worker>();
 	
+	public static LinkedList<TimeIntPair> timeIntList = new LinkedList<TimeIntPair>();
+	
 	//For testing a failed worker
 	public static Boolean hasWorkerFailed = false;
 	
-
+	public static int PRICERATE = 1;
 
 	
 	/**
@@ -109,7 +112,11 @@ public class TimeServer {
 		nonUrgentRequest =  filteredRequest;
 	}
 	
-	
+	public static void updateTimeList()
+	{
+		TimeIntPair temp = new TimeIntPair(LocalDateTime.now(), workerList.size());
+		timeIntList.addLast(temp);
+	}
 	
 	
 	

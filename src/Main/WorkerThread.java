@@ -82,6 +82,7 @@ public class WorkerThread extends Thread {
 			w.setCurrentThread(Thread.currentThread());
 			
 			Main.TimeServer.workerList.add(w);
+			Main.TimeServer.updateTimeList();
 		
 			
 			//Print to server for testing
@@ -131,15 +132,15 @@ public class WorkerThread extends Thread {
 						  r.setStatus(Request.Status.PROCESSING);
 						  
 						  //Uncomment to test worker failure handling
-						  if (w.getWorkerID() == 1) 
-						  {
-							  w.currentThread.stop();
-							  TimeServer.hasWorkerFailed = true;
-						  } 
+							/*
+							 * if (w.getWorkerID() == 1) { w.currentThread.stop();
+							 * TimeServer.hasWorkerFailed = true; }
+							 */
 						  
 						  String output = ProfanityManager.ManageString(r.getStringContent(), r);
 						  r.setOutput(output);
 						  r.setEndTime(LocalDateTime.now()); r.setStatus(Request.Status.COMPLETED);
+						  r.generateBill();
 						  w.setProcessingRequestID(null);
 						  
 						  // If there are more than 2 workers and the conditions that led to the creation of extra workers are no longer in place, and this worker thread.
@@ -181,6 +182,7 @@ public class WorkerThread extends Thread {
 		{
 			System.out.print("\nEnding worker: " + w.getWorkerID());
 			Main.TimeServer.workerList.remove(w);
+			Main.TimeServer.updateTimeList();
 		}
 		catch (Exception ex)
 		{
