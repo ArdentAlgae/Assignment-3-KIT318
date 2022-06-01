@@ -8,15 +8,12 @@ public class Worker {
 	int workerID;
 	
 	double cpu; //
-	String storage;
+	long storage;
 	
 	Thread currentThread;
 	
 	Integer processingRequestID;
 	
-	
-	
-
 
 	/**
 	 * @return the processingRequestID
@@ -93,13 +90,13 @@ public class Worker {
 	}
 
 
-	public String getStorage() {
+	public long getStorage() {
 		return storage;
 	}
 
 
-	public void setStorage(String storage) {
-		this.storage = storage;
+	public void setStorage(long l) {
+		this.storage = l;
 	}
 
 
@@ -111,6 +108,9 @@ public class Worker {
 	public void setNumberRequest(Integer numberRequest) {
 		this.numberRequest = numberRequest;
 	}
+
+
+	
 
 
 	

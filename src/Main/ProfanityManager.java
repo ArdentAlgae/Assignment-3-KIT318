@@ -22,7 +22,8 @@ public class ProfanityManager {
         String profanityCheckedMessage = str;
         String[] splitStr = profanityCheckedMessage.split(" "); //split input string into array
         
-       
+        request.setProfanityLevel(Request.Profanity.NONE);
+
         request.setProgress(0);
         float currentProgress = 0;
         float splitProgress = 100/splitStr.length;
@@ -37,6 +38,7 @@ public class ProfanityManager {
         *Loop through profanity list
         *Check if any profanity list entry matches input - if so then replace with **
         */
+        int profanityLevel = 0;
         for (int j = 0; j < splitStr.length; j++ ) 
         {
             for (int i = 0; i < profanityList.length; i++) 
@@ -45,10 +47,14 @@ public class ProfanityManager {
             	{
             		if(splitStr[j].toLowerCase(Locale.ROOT).contains(profanityList[i])) {
                         splitStr[j] = splitStr[j].replaceAll("(?i)" + profanityList[i], "*****");
+                        profanityLevel++;
             	}
 
                 }
             }
+            
+            
+            
             
             if (request.getType().equals(Request.Type.STRING))
             {
@@ -56,13 +62,30 @@ public class ProfanityManager {
                 request.setProgress(currentProgress);
                 //System.out.print(splitStr.toString()+" Progress: "+currentProgress);
                 //Use for testing
-                //TimeUnit.SECONDS.sleep(5);
+                //TimeUnit.MILLISECONDS.sleep(100);
             }
         }
         
         if (request.getType().equals(Request.Type.STRING) && !request.getStatus().equals(Request.Status.CANCELLED))
         {
         	request.setProgress(100);
+        }
+        
+        if (profanityLevel == 0)
+        {
+        	request.setProfanityLevel(Request.Profanity.NONE);
+        }
+        if (profanityLevel > 0 && profanityLevel <= 2)
+        {
+        	request.setProfanityLevel(Request.Profanity.LOW);
+        }
+        if (profanityLevel > 2 && profanityLevel <= 4)
+        {
+        	request.setProfanityLevel(Request.Profanity.MODERATE);
+        }
+        if (profanityLevel > 4)
+        {
+        	request.setProfanityLevel(Request.Profanity.HIGH);
         }
        
 
@@ -77,85 +100,8 @@ public class ProfanityManager {
         
         return profanityCheckedMessage;
     }
-    /*
-    *Input: String inputDirectory path, String Output directory path 
-    *Output: void (right now writes to output directory)
-    */
-    public static void ManageFiles(String inputDir, String outputDir, Request request) throws InterruptedException {
+    
 
-        try {
-            FileWriter myWriter = null;
-            File inputdir = new File(inputDir); //specify input directory path
-            File outputdir = null; //will hold output directory path
-            File[] directoryListing = inputdir.listFiles();
-            Scanner readFile = null;
-            
-            Integer currentFile = 0;
-            request.setNumFiles(directoryListing.length);
-            
-
-            /*
-            * check if input directory contains files + is a directory
-            * go through each file in input directory, read line by line then run through
-            * ManageString and write to outputdirectory path (create files when needed)
-            */
-            if (directoryListing != null && inputdir.isDirectory()) {
-                for (File child : directoryListing) {
-                	
-                	
-                	currentFile++;
-                	request.setCurrentFile(currentFile);
-                	//TESTING
-                	//TimeUnit.SECONDS.sleep(5);
-                	
-                	
-                    //System.out.println("file name:" + child.getName());
-                    readFile = new Scanner(child);
-                    String input; 
-                    //StringBuffer sb = new StringBuffer(); //testing
-                    
-                   File outputDirectory = new File(outputDir);
-                    
-                    if (!outputDirectory.exists())
-                    {
-                    	outputDirectory.mkdir();
-                    }
-                    
-                    outputdir = new File(outputDir + "\\" + child.getName());
-                    myWriter = new FileWriter(outputdir);
-                    
-                    /*
-                    * if file does not exist - create file
-                    */
-                    if(!outputdir.exists()){
-                        outputdir.createNewFile();
-                        outputdir.canWrite();
-                        outputdir.canRead();
-                    }
-                    
-                    
-                    while (readFile.hasNextLine()) {
-                        input = readFile.nextLine();
-                        input = ManageString(input, request);
-                        //inputToBytes = input.getBytes();
-                        //sb.append(input + " "); //testing
-                        myWriter.write(input);
-                        myWriter.write("\n");
-                      
-                    }
-                    myWriter.close();
-                    ///System.out.println(sb.toString()); //testing read file
-                }
-            }
-
-
-            
-        } catch (IOException e) {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
-        }
-
-    }
 
     /*
      * Input: file (path/file.txt), output directory (dir/path)

@@ -2,6 +2,7 @@ package Main;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -19,13 +20,6 @@ import Main.Request.Type;
 public class WorkerThread extends Thread {
 	
 	Socket serverClient;
-	int threadNum; // The thread's index in the arrayList
-	int requested = -1; // The index of the last user this user requested to chat with, used to tell
-						// whether a searched for name has been found.
-						// the -1 indicates that it applies to no existing thread.
-	int connected = -1; // The index of the user this user is connected to.
-	int pending = -1; // The index of the most recent user to request a chat.
-
 	String username = "";
 	
 	String in = "";
@@ -39,8 +33,6 @@ public class WorkerThread extends Thread {
 
 	WorkerThread(Socket inSocket) {
 		serverClient = inSocket;
-		
-
 		// serverList = inServerList;
 	}
 
@@ -58,36 +50,48 @@ public class WorkerThread extends Thread {
 			//Input Worker details
 			w = new Worker();
 			
-			if (TimeServer.hasWorkerFailed == false)
+			synchronized(Main.Server.workerList)
 			{
-				//w.setWorkerID(Main.TimeServer.workerList.size()+1);
-			}
+				if (Server.workerList.isEmpty())
+				{
+					w.setWorkerID(1);
+				}
 			else
-			{
-				//w.setWorkerID(Main.TimeServer.workerList.size()+2);
-				//TimeServer.hasWorkerFailed = false;
+				{
+				//w.setWorkerID(Server.workerList.getLast().getWorkerID()+1);
+					for (int i = 1; i <= Server.workerList.size()+1; i++)
+					{
+						boolean idExists = false;
+						for (Worker work : Server.workerList)
+						{
+							if (work.getWorkerID() == i)
+							{
+								idExists = true;
+							}
+						}
+						if (!idExists)
+						{
+							w.setWorkerID(i);
+							break;
+						}
+					}
+				}
 			}
-			
-			if (TimeServer.workerList.isEmpty())
-			{
-				w.setWorkerID(1);
-			}
-			else
-			{
-				w.setWorkerID(TimeServer.workerList.getLast().getWorkerID()+1);
-			}
-			
-			
 			
 			w.setCurrentThread(Thread.currentThread());
 			
-			Main.TimeServer.workerList.add(w);
-			Main.TimeServer.updateTimeList();
-		
+			synchronized(Main.Server.workerList)
+			{
+				Main.Server.workerList.add(w);
+			}
+			
+			synchronized(Main.Server.timeIntList)
+			{
+				Main.Server.updateTimeList();
+			}
 			
 			//Print to server for testing
 			System.out.print("\nWorker ID: "+w.getWorkerID()+" Started...");
-			
 			
 			processInput(); // Loop that will be used to process requests
 			
@@ -97,110 +101,113 @@ public class WorkerThread extends Thread {
 			s1In.close();
 			serverClient.close();
 		} catch (Exception ex) {
-			endWorkerThread();
+			System.out.print("\nError: ");
+			ex.printStackTrace();
+			//endWorkerThread();
 		}
 	}
 
 
 	public void processInput() throws UnknownHostException, IOException, InterruptedException {
-		
-		
-		while (true)
-		{
-			Thread.sleep(10);
-			
-			//TODO need to query the worker cpu, storage, health etc...
+
+		Boolean loop = true;
+		while (loop) {
+			//Get the Worker Health
 			OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
-			w.setCpu(osBean.getProcessCpuLoad());
+			File disk = new File("C:");
 			
-			
-				
-			// If there are more than 2 workers and the conditions that led to the creation of extra workers are no longer in place, and this worker thread.
-			if (Main.TimeServer.returnAllRequestsToProcess().size() <= 3 * (Main.TimeServer.workerList.size() - 1) && Main.TimeServer.workerList.size() > 2) 
+			synchronized (Main.Server.workerList) 
 			{
-				endWorkerThread();
+				w.setCpu(osBean.getProcessCpuLoad()/Main.Server.workerList.size());
+				w.setStorage(disk.getTotalSpace()/Main.Server.workerList.size());
 			}
+
+			// If there are more than 2 workers and the conditions that led to the creation
+			// of extra workers are no longer in place, and this worker thread.
+			synchronized (Main.Server.requestList) {
+					int workerListSize = Main.Server.workerList.size();
+					if (Main.Server.returnAllRequestsToProcess(Main.Server.requestList).size() < 10) {
+						if (workerListSize > 2) {
+							if (w.getWorkerID() == workerListSize) {
+								// endWorkerThread();
+								loop = false;
+							}
+						}
+
+					}
+				}
+
 			
-			
-			if (!Main.TimeServer.returnAllRequestsToProcess().isEmpty())
-			{
-				  for (Request r : Main.TimeServer.returnAllRequests()) 
-				  {
-					  if (r.getType().equals(Request.Type.STRING) && r.getStatus().equals(Request.Status.INACTIVE))
-					  	{
-						  w.setProcessingRequestID(r.getRequestID());
-						  r.setStatus(Request.Status.PROCESSING);
-						  
-						  //Uncomment to test worker failure handling
-							/*
-							 * if (w.getWorkerID() == 1) { w.currentThread.stop();
-							 * TimeServer.hasWorkerFailed = true; }
-							 */
-						  
-						  String output = ProfanityManager.ManageString(r.getStringContent(), r);
-						  r.setOutput(output);
-						  r.setEndTime(LocalDateTime.now()); r.setStatus(Request.Status.COMPLETED);
-						  r.generateBill();
-						  w.setProcessingRequestID(null);
-						  
-						  // If there are more than 2 workers and the conditions that led to the creation of extra workers are no longer in place, and this worker thread.
-						  if (Main.TimeServer.returnAllRequestsToProcess().size() <= 3 * (Main.TimeServer.workerList.size() - 1) && Main.TimeServer.workerList.size() > 2)
-						  {
-								endWorkerThread();
-						  }
-					  	}
-					  
-					  if (r.getType().equals(Request.Type.FILE) && r.getStatus().equals(Request.Status.INACTIVE))
-					  {
-						  //TODO need to sort out file filtering
-						  r.setStatus(Request.Status.PROCESSING);
-						  //ProfanityManager.ManageFiles(r.getInputFilePath(), r.getOutputFilePath(), r);
-						  ProfanityManager.ManageSingleFile(r.getInputFileName(), r.getOutputFilePath(), r);
-						  r.setEndTime(LocalDateTime.now()); r.setStatus(Request.Status.COMPLETED);
-					  }
-				  }
+
+			// TODO Job prioritisation
+			synchronized (Main.Server.requestList) {
+				if (!Main.Server.requestList.isEmpty()) {
+					if (!Main.Server.returnAllRequestsToProcess(Main.Server.requestList).isEmpty()) {
+						LinkedList<Request> requestProcess = Main.Server.returnAllRequestsToProcess(Main.Server.requestList);
+						LinkedList<Request> requestProcessed = new LinkedList<Request>();
+						
+						if (!Server.returnUrgentRequests(requestProcess).isEmpty())
+						{
+							requestProcessed = Server.returnUrgentRequests(requestProcess);
+						}
+						else
+						{
+							requestProcessed = Server.returnNonUrgentRequests(requestProcess);
+						}
+						
+						Request r = Main.Server.returnAllRequestsToProcess(requestProcessed).getFirst();
+
+						if (r.getType().equals(Request.Type.STRING) && r.getStatus().equals(Request.Status.INACTIVE)) {
+							System.out.print("\nWorker ID: " + w.getWorkerID() + " is processing Request ID: "
+									+ r.getRequestID());
+							w.setProcessingRequestID(r.getRequestID());
+							r.setProfanityLevel(Request.Profanity.NONE);
+							r.setStatus(Request.Status.PROCESSING);
+
+							// Uncomment to test worker failure handling
+							if (w.getWorkerID() == 1 && Main.Server.hasWorkerFailed == false) {
+								//Main.Server.hasWorkerFailed = true;
+								//w.currentThread.stop();
+							}
+
+							String output = ProfanityManager.ManageString(r.getStringContent(), r);
+							r.setOutput(output);
+							r.setEndTime(LocalDateTime.now());
+							r.setStatus(Request.Status.COMPLETED);
+							w.setProcessingRequestID(null);
+
+						}
+
+						if (r.getType().equals(Request.Type.FILE) && r.getStatus().equals(Request.Status.INACTIVE)) {
+							System.out.print("\nWorker ID: " + w.getWorkerID() + " is processing Request ID: "
+									+ r.getRequestID());
+							w.setProcessingRequestID(r.getRequestID());
+
+							// Uncomment to test worker failure handling
+							if (w.getWorkerID() == 1 && Main.Server.hasWorkerFailed == false) {
+								Main.Server.hasWorkerFailed = true;
+								// w.currentThread.stop();
+							}
+
+							// TODO need to sort out file filtering
+							r.setStatus(Request.Status.PROCESSING);
+							// ProfanityManager.ManageFiles(r.getInputFilePath(), r.getOutputFilePath(), r);
+							ProfanityManager.ManageSingleFile(r.getInputFileName(), r.getOutputFilePath(), r);
+							r.setEndTime(LocalDateTime.now());
+							r.setStatus(Request.Status.COMPLETED);
+							w.setProcessingRequestID(null);
+						}
+					}
+
+				}
 			}
-			
-			
-			 
-			
-//			  System.out.print("LOOPING"); if (r.getType().equals(Request.Type.STRING) &&
-//			  r.getStatus().equals(Request.Status.INACTIVE)) {
-//			  r.setStatus(Request.Status.PROCESSING);
-//			  r.setOutput(ProfanityManager.ManageString(r.getStringContent()));
-//			  r.setEndTime(LocalDateTime.now()); r.setStatus(Request.Status.COMPLETED); } }
-//			 
+
 		}
-		
-		
+		System.out.print("\nWorker id: "+w.getWorkerID()+" has finished...");
+		synchronized(Main.Server.workerList)
+		{
+			Server.workerList.remove(w);
+		}
 	}
 
-	@SuppressWarnings("deprecation")
-	private void endWorkerThread()
-	{
-		try
-		{
-			System.out.print("\nEnding worker: " + w.getWorkerID());
-			Main.TimeServer.workerList.remove(w);
-			Main.TimeServer.updateTimeList();
-		}
-		catch (Exception ex)
-		{
-		}
-		try
-		{
-			dos.close();
-			s1out.close();
-			dis.close();
-			s1In.close();
-			serverClient.close();
-		}
-		catch (Exception ex)
-		{
-		}
-		finally
-		{
-			this.stop();
-		}
-	}
 }

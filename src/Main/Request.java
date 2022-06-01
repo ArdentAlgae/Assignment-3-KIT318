@@ -28,11 +28,57 @@ public class Request {
 	
 	
 	
+	
 	float progress;
 	Integer numFiles;
 	Integer currentFile;
 	
 	Status status;
+	
+	Urgency urgency;
+	
+	Profanity profanityLevel;
+	
+	
+	/**
+	 * @return the profanityLevel
+	 */
+	public Profanity getProfanityLevel() {
+		return profanityLevel;
+	}
+
+	/**
+	 * @param profanityLevel the profanityLevel to set
+	 */
+	public void setProfanityLevel(Profanity profanityLevel) {
+		this.profanityLevel = profanityLevel;
+	}
+
+
+
+	enum Profanity {
+		NONE, LOW, MODERATE, HIGH
+	}
+	
+	/**
+	 * @return the urgency
+	 */
+	public Urgency getUrgency() {
+		return urgency;
+	}
+
+	/**
+	 * @param urgency the urgency to set
+	 */
+	public void setUrgency(Urgency urgency) {
+		this.urgency = urgency;
+	}
+
+
+
+	enum Urgency {
+		URGENT, NONURGENT
+	}
 	
 	public String getInputFileName() {
 		return inputFileName;
@@ -191,8 +237,8 @@ public class Request {
 		double bill = 0;
 		boolean finished = false;
 		boolean startTimesChecked = false;
-		TimeIntPair prev = TimeServer.timeIntList.getFirst();
-		for(TimeIntPair current: TimeServer.timeIntList)
+		TimeIntPair prev = Server.timeIntList.getFirst();
+		for(TimeIntPair current: Server.timeIntList)
 		{
 			if(current.time.isAfter(startTime))
 			{
@@ -200,11 +246,11 @@ public class Request {
 				{
 					if(prev.time.isAfter(startTime))
 					{
-						bill += Duration.between(prev.time, endTime).toNanos()*TimeServer.PRICERATE/prev.numWorkers;
+						bill += Duration.between(prev.time, endTime).toNanos()*Server.PRICERATE/prev.numWorkers;
 					}
 					else
 					{
-						bill += Duration.between(startTime, endTime).toNanos()*TimeServer.PRICERATE/prev.numWorkers;
+						bill += Duration.between(startTime, endTime).toNanos()*Server.PRICERATE/prev.numWorkers;
 					}
 					
 					finished = true;
@@ -214,11 +260,11 @@ public class Request {
 				{
 					if(prev.time.isAfter(startTime))
 					{
-						bill += Duration.between(prev.time, current.time).toNanos()*TimeServer.PRICERATE/prev.numWorkers;
+						bill += Duration.between(prev.time, current.time).toNanos()*Server.PRICERATE/prev.numWorkers;
 					}
 					else
 					{
-						bill += Duration.between(startTime, current.time).toNanos()*TimeServer.PRICERATE/prev.numWorkers;
+						bill += Duration.between(startTime, current.time).toNanos()*Server.PRICERATE/prev.numWorkers;
 					}
 				}
 			}
@@ -226,23 +272,10 @@ public class Request {
 			if(!startTimesChecked && current != prev)
 			{
 				boolean requestBeforeCurrent = false;
-				for(Request r : TimeServer.urgentRequest)
-				{
-					if(current.time.isAfter(r.getStartTime()))
-					{
-						
-					}
-				}
-				for(Request r : TimeServer.nonUrgentRequest)
-				{
-					if(current.time.isAfter(r.getStartTime()))
-					{
-						
-					}
-				}
+				
 				if(!requestBeforeCurrent)
 				{
-					TimeServer.timeIntList.removeFirst();
+					Server.timeIntList.removeFirst();
 				}
 				else
 				{
@@ -256,11 +289,11 @@ public class Request {
 		{
 			if(prev.time.isAfter(startTime))
 			{
-				bill += Duration.between(prev.time, endTime).toNanos()*TimeServer.PRICERATE/prev.numWorkers;
+				bill += Duration.between(prev.time, endTime).toNanos()*Server.PRICERATE/prev.numWorkers;
 			}
 			else
 			{
-				bill += Duration.between(startTime, endTime).toNanos()*TimeServer.PRICERATE/prev.numWorkers;
+				bill += Duration.between(startTime, endTime).toNanos()*Server.PRICERATE/prev.numWorkers;
 			}
 		}
 		return bill;
