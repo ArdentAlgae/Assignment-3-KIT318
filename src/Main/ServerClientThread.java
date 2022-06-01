@@ -191,7 +191,7 @@ class ServerThread extends Thread {
 						
 						Integer requestID = incrementRequestID();
 						
-						File dir = new File("files/input");
+						File dir = new File("C:\\Users\\jhanc\\eclipse-workspace\\Assignment-3-KIT319-TEST\\src\\files\\input");
 						for (File file: dir.listFiles())
 						{
 							synchronized(Main.Server.requestList)
@@ -204,8 +204,8 @@ class ServerThread extends Thread {
 								request.setStartTime(LocalDateTime.now());
 								request.setRequestID(requestID);
 								request.setInputFileName(file.getName());
-								request.setInputFilePath("files/input");
-								request.setOutputFilePath("files/output");
+								request.setInputFilePath("C:\\Users\\jhanc\\eclipse-workspace\\Assignment-3-KIT319-TEST\\src\\files\\input");
+								request.setOutputFilePath("C:\\Users\\jhanc\\eclipse-workspace\\Assignment-3-KIT319-TEST\\src\\files\\output");
 								
 								if (in2.equals("0")) {
 									request.setUrgency(Request.Urgency.URGENT);
@@ -238,7 +238,7 @@ class ServerThread extends Thread {
 						if (r.getStatus().equals(Request.Status.COMPLETED))
 						{
 							long timeTaken = ChronoUnit.MILLIS.between(r.getStartTime(), r.getEndTime());
-							double bill = 100*timeTaken;
+							double bill = 10000*timeTaken;
 							//synchronized (Main.Server.requestList)
 							{
 								//bill = r.generateBill();
@@ -249,16 +249,20 @@ class ServerThread extends Thread {
 							dos.writeUTF("Request ID: "+r.getRequestID()+", Status: "+r.getStatus()+
 									", Date started: "+date.format(r.getStartTime())+
 									", Date ended: "+date.format(r.getEndTime())+
+									", File "+r.getCurrentFile()+"/"+r.getNumFiles()+
 									", Time taken (ms): "+timeTaken+
 									", Bill: $"+cost+
-									", Profanity Level: $"+r.getProfanityLevel()+
+									", Profanity Level: "+r.getProfanityLevel()+
 									", Output: "+r.getOutput()
 									);
 						}
 						else
 						{
+							
 							dos.writeUTF("Request ID: "+r.getRequestID()+", Status: "+r.getStatus()+", Progress: "+r.getProgress()+", Date started: "+date.format(r.getStartTime()));
 						}
+						
+						//", File "+r.getCurrentFile()+"/"+r.getNumFiles()+
 					}
 						
 				}
@@ -295,19 +299,23 @@ class ServerThread extends Thread {
 					DateTimeFormatter date = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 					
 					dos.writeUTF("List all requests");
-					for (Request r : Main.Server.requestList)
+					synchronized(Main.Server.requestList)
 					{
-						if (r.getType().equals(Request.Type.STRING))
+						for (Request r : Main.Server.requestList)
 						{
-							dos.writeUTF("Request ID: "+r.getRequestID()+", Status: "+r.getStatus()+", Progress: "+r.getProgress()+"%"+", Date started: "+date.format(r.getStartTime()));
+							if (r.getType().equals(Request.Type.STRING))
+							{
+								dos.writeUTF("Request ID: "+r.getRequestID()+", Status: "+r.getStatus()+", Progress: "+r.getProgress()+"%"+", Profanity Level: "+r.getProfanityLevel()+", Date started: "+date.format(r.getStartTime()));
+							}
+							
+							if (r.getType().equals(Request.Type.FILE))
+							{
+								dos.writeUTF("Request ID: "+r.getRequestID()+", Status: "+r.getStatus()+", Date started: "+date.format(r.getStartTime()));
+							}
+							
 						}
-						
-						if (r.getType().equals(Request.Type.FILE))
-						{
-							dos.writeUTF("Request ID: "+r.getRequestID()+", Status: "+r.getStatus()+", File "+r.getCurrentFile()+"/"+r.getNumFiles()+", Date started: "+date.format(r.getStartTime()));
-						}
-						
 					}
+					
 					
 				}
 				
@@ -440,6 +448,7 @@ class ServerThread extends Thread {
 		req.setStatus(Request.Status.INACTIVE);
 		req.setStartTime(LocalDateTime.now());
 		
+
 		for(Request r: Server.requestList)
 		{
 			if (r.getUserName().equals(username))
@@ -447,12 +456,13 @@ class ServerThread extends Thread {
 				if (r.getRequestID().toString().equals(requestID))
 				{
 					totalFiles++;
-					req.setNumFiles(totalFiles);
+					
 					
 					//If String
 					if (r.getType().equals(Request.Type.STRING))
 					{
-						req.setOutput(r.getOutput());
+						//req.setOutput(r.getOutput());
+						req = r;
 					}
 					else
 					{
@@ -473,6 +483,46 @@ class ServerThread extends Thread {
 						req.setStatus(Request.Status.PROCESSING);
 					}
 					
+					if (req.getProfanityLevel() == null)
+					{
+						req.setProfanityLevel(Request.Profanity.NONE);
+					}
+					
+					if (r.getProfanityLevel() != null)
+					{
+						if (r.getProfanityLevel().equals(Request.Profanity.NONE))
+						{
+							if (!req.getProfanityLevel().equals(Request.Profanity.LOW) || !req.getProfanityLevel().equals(Request.Profanity.MODERATE) || !req.getProfanityLevel().equals(Request.Profanity.HIGH))
+							{
+								req.setProfanityLevel(Request.Profanity.NONE);
+							}
+						}
+						if (r.getProfanityLevel().equals(Request.Profanity.LOW))
+						{
+							if (!req.getProfanityLevel().equals(Request.Profanity.MODERATE) || !req.getProfanityLevel().equals(Request.Profanity.HIGH))
+							{
+								req.setProfanityLevel(Request.Profanity.LOW);
+							}
+						}
+						if (r.getProfanityLevel().equals(Request.Profanity.MODERATE))
+						{
+							if (!req.getProfanityLevel().equals(Request.Profanity.HIGH))
+							{
+								req.setProfanityLevel(Request.Profanity.MODERATE);
+							}
+						}
+						if (r.getProfanityLevel().equals(Request.Profanity.HIGH))
+						{
+							req.setProfanityLevel(Request.Profanity.HIGH);
+						}
+					}
+					else
+					{
+						req.setProfanityLevel(Request.Profanity.NONE);
+					}
+					
+					
+					
 					if (req.getStartTime().isAfter(r.getStartTime()))
 					{
 						req.setStartTime(r.getStartTime());
@@ -482,6 +532,13 @@ class ServerThread extends Thread {
 			}
 
 		}
+		
+		if (req.getType().equals(Request.Type.FILE))
+		{
+			req.setNumFiles(totalFiles);
+			req.setCurrentFile(filesCompleted);
+		}
+		
 		return req;
 		
 	}

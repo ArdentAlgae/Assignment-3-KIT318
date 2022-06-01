@@ -33,6 +33,7 @@ public class Request {
 	Integer numFiles;
 	Integer currentFile;
 	
+
 	Status status;
 	
 	Urgency urgency;
@@ -40,22 +41,6 @@ public class Request {
 	Profanity profanityLevel;
 	
 	
-	/**
-	 * @return the profanityLevel
-	 */
-	public Profanity getProfanityLevel() {
-		return profanityLevel;
-	}
-
-	/**
-	 * @param profanityLevel the profanityLevel to set
-	 */
-	public void setProfanityLevel(Profanity profanityLevel) {
-		this.profanityLevel = profanityLevel;
-	}
-
-
-
 	enum Profanity {
 		NONE, LOW, MODERATE, HIGH
 	}
@@ -78,6 +63,20 @@ public class Request {
 
 	enum Urgency {
 		URGENT, NONURGENT
+	}
+	
+	/**
+	 * @return the profanityLevel
+	 */
+	public Profanity getProfanityLevel() {
+		return profanityLevel;
+	}
+
+	/**
+	 * @param profanityLevel the profanityLevel to set
+	 */
+	public void setProfanityLevel(Profanity profanityLevel) {
+		this.profanityLevel = profanityLevel;
 	}
 	
 	public String getInputFileName() {

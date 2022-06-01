@@ -161,8 +161,8 @@ public class WorkerThread extends Thread {
 							System.out.print("\nWorker ID: " + w.getWorkerID() + " is processing Request ID: "
 									+ r.getRequestID());
 							w.setProcessingRequestID(r.getRequestID());
-							r.setProfanityLevel(Request.Profanity.NONE);
 							r.setStatus(Request.Status.PROCESSING);
+							//r.setStartTime(LocalDateTime.now());
 
 							// Uncomment to test worker failure handling
 							if (w.getWorkerID() == 1 && Main.Server.hasWorkerFailed == false) {
@@ -185,12 +185,16 @@ public class WorkerThread extends Thread {
 
 							// Uncomment to test worker failure handling
 							if (w.getWorkerID() == 1 && Main.Server.hasWorkerFailed == false) {
-								Main.Server.hasWorkerFailed = true;
+								//Main.Server.hasWorkerFailed = true;
 								// w.currentThread.stop();
 							}
+							
 
 							// TODO need to sort out file filtering
 							r.setStatus(Request.Status.PROCESSING);
+							
+							
+							
 							// ProfanityManager.ManageFiles(r.getInputFilePath(), r.getOutputFilePath(), r);
 							ProfanityManager.ManageSingleFile(r.getInputFileName(), r.getOutputFilePath(), r);
 							r.setEndTime(LocalDateTime.now());

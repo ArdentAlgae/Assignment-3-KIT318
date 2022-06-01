@@ -13,39 +13,6 @@ import java.io.*;
 
 public class Client {
 	
-	public static void uploadfile() {
-		try {
-	          String host = "131.217.172.91";
-	          String user = "ubuntu";
-	          String privateKey = "C:\\Users\\jhanc\\Downloads\\TestKeyPrivate.pem"; //please provide your ppk file
-	          JSch jsch = new JSch();
-	          Session session = jsch.getSession(user, host, 22);
-	          Properties config = new Properties();
-	         // session.setPassword("KIT418@utas"); ////if password is empty please comment it
-	          jsch.addIdentity(privateKey);
-	          System.out.println("identity added "); 
-	          config.put("StrictHostKeyChecking", "no");
-	          session.setConfig(config);
-	          session.connect();
-	       
-	          Channel channel = session.openChannel("sftp");
-	          channel.connect();
-	          ChannelSftp sftpChannel = (ChannelSftp) channel;
-	          sftpChannel.put("C:\\Users\\jhanc\\Downloads\\test\\test.txt", "/home/ubuntu/Input/test.text"); //Provide different input file/folder
-	         
-	          System.out.println("done");
-
-	          sftpChannel.exit();
-	          session.disconnect();
-	      } catch (JSchException e) {
-	          e.printStackTrace();
-	      } catch (SftpException e) {
-	          e.printStackTrace();
-	      }
-			catch(Exception e){
-	      	   System.out.println(e);
-			}   
-		}
 	
 	/**
 	 * Main method for the Client
